@@ -12,6 +12,7 @@ class ImageAnalyzer:
     @staticmethod
     def load_crop_grayscale(path, crop=None):
         """
+        Expected to be used on either Grayscale- or RGB images.
         Load image, optionally crop, and convert to grayscale.
         crop = (row_start, row_end, col_start, col_end)
         """
@@ -19,7 +20,7 @@ class ImageAnalyzer:
         if crop is not None:
             r1, r2, c1, c2 = crop
             img = img[r1:r2, c1:c2]
-        if img.ndim == 3:
+        if img.ndim == 3: 
             img = img.mean(axis=2)
         return img
 
@@ -139,7 +140,7 @@ class ImageAnalyzer:
         """
         isotropy = lam_small / (lam_large + 1e-10)
         anisotropy = 1 - isotropy
-        return isotropy, anisotropy
+        return anisotropy
     
 #COMPUTE ENERGY CUTOFF MASK
     @staticmethod
@@ -162,7 +163,7 @@ class ImageAnalyzer:
     
 #PLOT ORIENTATION OVERLAY WITH CHOSEN ENERGY CUTOFF
     @staticmethod
-    def plot_orientation_overlay(image, theta, anisotropy, percentile):
+    def plot_orientation_overlay(image, theta, anisotropy, percentile, opaqueness = 0.55):
         """
         Plot orientation overlay using precomputed anisotropy.
         """
@@ -174,7 +175,7 @@ class ImageAnalyzer:
         plt.imshow(
             theta_norm,
             cmap="hsv",
-            alpha=0.55 * anisotropy,
+            alpha= opaqueness * anisotropy,
             interpolation="nearest"
         )
         plt.axis("off")
@@ -201,11 +202,6 @@ class ImageAnalyzer:
         theta_flat = theta.ravel()
         weights_flat = anisotropy_energy.ravel()
 
-        valid = np.isfinite(theta_flat) & np.isfinite(weights_flat)
-
-        theta_flat = theta_flat[valid]
-        weights_flat = weights_flat[valid]
-
         counts, bin_edges = np.histogram(
             theta_flat,
             bins=bins,
@@ -217,19 +213,15 @@ class ImageAnalyzer:
         bin_width = bin_edges[1] - bin_edges[0]
 
         return counts, bin_centers, bin_width
-    
-#PLOTTING WEIGHTED HISTOGRAM 
+
+# PLOTTING WEIGHTED HISTOGRAM
     @staticmethod
     def plot_orientation_histogram(counts, bin_centers, bin_width):
         """
-        Plot orientation histogram with HSV colouring.
+        Plot weighted orientation histogram with HSV colouring.
         """
 
-        # Normalize angles to [0,1] for colourmap
-        bin_centers_norm = bin_centers / np.pi
-
-        # Map each bin to a colour
-        bar_colours = plt.cm.hsv(bin_centers_norm)
+        colours = plt.cm.hsv(bin_centers / np.pi)
 
         plt.figure(figsize=(6, 6))
 
@@ -237,7 +229,7 @@ class ImageAnalyzer:
             bin_centers,
             counts,
             width=bin_width,
-            color=bar_colours,
+            color=colours,
             align='center'
         )
 
@@ -249,43 +241,26 @@ class ImageAnalyzer:
 
         plt.xticks(
             [0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi],
-            ["0","π/4", "π/2", "3π/4", "π"]
+            ["0", "π/4", "π/2", "3π/4", "π"]
         )
 
         plt.show()
 
-# COMPUTATIONS FOR POLAR HISTOGRAM
+# PLOTTING POLAR HISTOGRAM
     @staticmethod
-    def compute_polar_histogram(counts, bin_centers):
-        """
-        Prepare data for symmetric polar histogram.
-
-        Returns:
-        - angles_full
-        - counts_full
-        - colours_full
-        """
-
-        # Duplicate angles to cover [0, 2π]
-        angles_full = np.concatenate([bin_centers, bin_centers + np.pi])
-
-        # Duplicate counts (symmetry)
-        counts_full = np.concatenate([counts, counts])
-
-        # Colour mapping (based on original angles)
-        colours = plt.cm.hsv(bin_centers / np.pi)
-
-        # Duplicate colours
-        colours_full = np.concatenate([colours, colours], axis=0)
-
-        return angles_full, counts_full, colours_full
-
-#PLOT POLAR HISTROGRAM 
-    @staticmethod
-    def plot_polar_histogram(angles_full, counts_full, colours_full, bin_width):
+    def plot_polar_histogram(counts, bin_centers, bin_width):
         """
         Plot weighted polar histogram.
+
+        The histogram is duplicated over [pi, 2pi] because orientations are axial:
+        angles differing by pi represent the same orientation.
         """
+
+        angles_full = np.concatenate([bin_centers, bin_centers + np.pi])
+        counts_full = np.concatenate([counts, counts])
+
+        colours = plt.cm.hsv(bin_centers / np.pi)
+        colours_full = np.concatenate([colours, colours], axis=0)
 
         fig, ax = plt.subplots(
             subplot_kw={'projection': 'polar'},
@@ -300,7 +275,6 @@ class ImageAnalyzer:
             align='center'
         )
 
-        # Set angle ticks every 15 degrees
         ax.set_xticks(np.deg2rad(np.arange(0, 360, 15)))
 
         plt.title("Weighted Polar Histogram")
@@ -327,7 +301,7 @@ class ImageAnalyzer:
 
         for center in centers:
             # Circular distance (important!)
-            diff = np.abs(np.angle(np.exp(1j * (theta - center))))
+            diff = ImageAnalyzer.axial_distance(theta, center)
             mask = diff < tolerance
             chosen_theta_binned[mask] = center
         return chosen_theta_binned
@@ -339,7 +313,8 @@ class ImageAnalyzer:
         chosen_theta_binned,
         anisotropy_energy,
         angles_deg,
-        tolerance_deg=10
+        tolerance_deg=10,
+        opaqueness = 0.55
     ):
         """
         Overlay selected orientations on image.
@@ -359,7 +334,7 @@ class ImageAnalyzer:
             cmap="hsv",
             vmin=0,
             vmax=np.pi,
-            alpha=0.55 * anisotropy_energy,
+            alpha= opaqueness * anisotropy_energy,
             interpolation="nearest"
         )
 
@@ -383,16 +358,12 @@ class ImageAnalyzer:
         dominant_rads = np.deg2rad(dominant_angles_deg)
         tolerance = np.deg2rad(tolerance_deg)
 
-        # Axial distance (orientation invariant: π-periodic)
-        def axial_distance(a, b):
-            d = np.abs(a - b) % np.pi
-            return np.minimum(d, np.pi - d)
 
         # Build alignment mask
         alignment = np.zeros_like(theta_flat, dtype=bool)
 
         for a in dominant_rads:
-            alignment |= (axial_distance(theta_flat, a) < tolerance)
+            alignment |= (ImageAnalyzer.axial_distance(theta_flat, a) < tolerance)
 
         # Weighted percentage
         total_energy = np.sum(weights)
@@ -410,3 +381,118 @@ class ImageAnalyzer:
             f"{percentile:.2f}% of orientations align with "
             f"{dominant_angles_deg}° (±{tolerance_deg}°)"
         )
+
+#AXIAL DISTANCE
+    @staticmethod
+    def axial_distance(a, b):
+            """
+            Axial distance (orientation invariant: π-periodic)
+            In radians.
+
+            Parameters:
+            - a: angle1
+            - b: angle2
+
+            Returns:
+            Axial distance between a and b.
+            """
+            d = np.abs(a - b) % np.pi
+            return np.minimum(d, np.pi - d)
+
+
+# -------------------
+#COMPOSITE FUNCTIONS
+#--------------------
+
+#COMPUTING STRUCTURE TENSOR
+    @staticmethod
+    def compute_structure_tensor(img, sigma_derivative, sigma_tensor):
+        """
+        Computing the structure tensor for a given image
+
+        Parameters:
+        - img: grayscale image
+        - sigma_derivative: sigma for first gaussian smoothing when finding gradients
+        - sigma_tensor: sigma for second gaussan when smoothing the tensor over local neighbourhood pixels
+
+
+        Returns:
+        Structure tensor for given image
+        """
+        Ix, Iy = ImageAnalyzer.compute_gradients(img, sigma_deriv=sigma_derivative)
+        S11, S12, S22 = ImageAnalyzer.structure_tensor(Ix, Iy)
+        S11, S12, S22 = ImageAnalyzer.smooth_tensor(S11, S12, S22, sigma_tensor=sigma_tensor)
+        S = ImageAnalyzer.tensor_to_matrix(S11, S12, S22)
+
+        return S
+    
+#COMPUTING ANISOTROPY MASKED:
+    @staticmethod
+    def compute_anisotropy_masked(structure_tensor, percent = 45):
+        """
+        Computing the anisotropy masked for an image using the structure tensors
+
+        Parameters:
+        - structure_tensor: matrix containing structure tensors for the image
+        - percent: the percentile energy cutoff, for when the anisotropy is included
+        """
+
+
+        evals, evecs = ImageAnalyzer.eigendecomposition(structure_tensor)
+        lam_s, lam_l, v_s, v_l = ImageAnalyzer.split_eigenpairs(evals, evecs)
+        energy = ImageAnalyzer.compute_energy(lam_s, lam_l)
+        aniso = ImageAnalyzer.compute_isotropy_anisotropy(lam_s, lam_l)
+        mask = ImageAnalyzer.energy_mask(energy, percent)
+        anisotropy_masked = ImageAnalyzer.mask_anisotropy(aniso, mask)
+
+        return anisotropy_masked
+    
+
+#-------------------
+#PLOTTING FUNCTIONS
+#-------------------
+
+#PLOTTING ORIENTATION VECTORS
+    @staticmethod
+    def plot_orientation_vectors(img, structure_tensor, step = 40 ,scale = 50):
+        """
+        Plotting dominant orientation vectors
+
+        Parameters:
+        - img: grayscale image
+        - structure_tenstor: matrix containing structure tensors for the image
+        - step: How often vectors are displayed (pixel-wise)
+        - scale: size of vectors. Smaller is bigger
+        """
+
+        evals, evecs = ImageAnalyzer.eigendecomposition(structure_tensor)
+        _, _,v_small, _ = ImageAnalyzer.split_eigenpairs(evals,evecs)
+
+        theta = ImageAnalyzer.orientation_from_eigenvectors(v_small)
+
+        vx, vy = ImageAnalyzer.orientation_to_unit_vectors(theta)
+
+        Y, X = np.mgrid[0:vx.shape[0], 0:vx.shape[1]]
+        step = step
+
+        # We are using the step so we only take every fourth
+        Xs = X[::step, ::step]
+        Ys = Y[::step, ::step]
+
+        # We are only taking every fourth unit vector as well
+        vxs = vx[::step, ::step]
+        vys = vy[::step, ::step]
+
+        plt.figure(figsize=(8,8))
+
+        plt.imshow(img, cmap="gray")
+
+        # plotting the dominant direction eigenvectors.
+        plt.quiver(Xs, Ys, vxs, vys, color="yellow",scale = scale)
+        plt.quiver(Xs, Ys, -vxs, -vys, color="yellow")
+
+        plt.title("Dominant Orientation Vector Field")
+        plt.show()
+
+        
+
