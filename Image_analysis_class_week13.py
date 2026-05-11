@@ -24,7 +24,7 @@ class ImageAnalyzer:
 
 # ORIENTATION HISTOGRAM
     @staticmethod
-    def compute_orientation_histogram(theta, anisotropy_energy, bins=180):
+    def compute_orientation_histogram(theta, anisotropy_energy = None, bins=180):
         """
         Compute weighted histogram of orientations.
 
@@ -40,7 +40,11 @@ class ImageAnalyzer:
         """
 
         theta_flat = theta.ravel()
-        weights_flat = anisotropy_energy.ravel()
+        
+        if anisotropy_energy is None:
+            weights_flat = np.ones_like(theta_flat)
+        else:
+            weights_flat = anisotropy_energy.ravel()
 
         counts, bin_edges = np.histogram(
             theta_flat,
@@ -81,6 +85,25 @@ class ImageAnalyzer:
             chosen_theta_binned[mask] = center
         return chosen_theta_binned
     
+#
+    @staticmethod
+    def bin_orientations_uniform(theta, bin_size):
+        """
+        Quantize orientations into fixed angular bins.
+
+        Parameters:
+        - theta: orientation field in radians
+        - bin_size_deg: bin spacing in radians
+
+        Returns:
+        - theta_binned
+        """
+
+
+        theta_binned = np.round(theta / bin_size) * bin_size
+        theta_binned = np.mod(theta_binned, np.pi)
+
+        return theta_binned
 
 #COMPUTING ALIGNMENT PERCENTAGE
     @staticmethod
@@ -380,7 +403,7 @@ class ImageAnalyzer:
     
 #PLOT ORIENTATION OVERLAY WITH CHOSEN ENERGY CUTOFF
     @staticmethod
-    def plot_orientation_overlay(image, theta, anisotropy, percentile, opaqueness = 0.55):
+    def plot_orientation_overlay(image, theta, anisotropy = 1, percentile = 0, opaqueness = 0.55):
         """
         Plot orientation overlay using precomputed anisotropy.
         """
@@ -405,7 +428,7 @@ class ImageAnalyzer:
     @staticmethod
     def plot_orientation_histogram(counts, bin_centers, bin_width):
         """
-        Plot weighted orientation histogram with HSV colouring.
+        Plot orientation histogram with HSV colouring.
         """
 
         colours = plt.cm.hsv(bin_centers / np.pi)
@@ -437,7 +460,7 @@ class ImageAnalyzer:
     @staticmethod
     def plot_polar_histogram(counts, bin_centers, bin_width):
         """
-        Plot weighted polar histogram.
+        Plot polar histogram.
 
         The histogram is duplicated over [pi, 2pi] because orientations are axial:
         angles differing by pi represent the same orientation.
