@@ -10,7 +10,14 @@ class ImageAnalyzer:
         """
         Expected to be used on either Grayscale- or RGB images.
         Load image, optionally crop, and convert to grayscale.
-        crop = (row_start, row_end, col_start, col_end)
+       
+
+        Parameters:
+        - path: Relative path to image file
+        - crop: (row_start, row_end, col_start, col_end)
+
+        Returns:
+        - grayscale image
         """
         img = plt.imread(path)
         if crop is not None:
@@ -26,7 +33,8 @@ class ImageAnalyzer:
     @staticmethod
     def compute_orientation_histogram(theta, anisotropy_energy = None, bins=180):
         """
-        Compute weighted histogram of orientations.
+        Compute histogram of orientations.
+        Can be unweighted or weighted
 
         Parameters:
         - theta: orientation field (radians, [0, pi])
@@ -85,7 +93,7 @@ class ImageAnalyzer:
             chosen_theta_binned[mask] = center
         return chosen_theta_binned
     
-#
+#BINS ORIENTATIONS UNIFORMLY
     @staticmethod
     def bin_orientations_uniform(theta, bin_size):
         """
@@ -93,12 +101,13 @@ class ImageAnalyzer:
 
         Parameters:
         - theta: orientation field in radians
-        - bin_size_deg: bin spacing in radians
+        - bin_size: bin spacing in degrees
 
         Returns:
-        - theta_binned
+        - theta_binned in radians
         """
 
+        bin_size = np.deg2rad(bin_size)
 
         theta_binned = np.round(theta / bin_size) * bin_size
         theta_binned = np.mod(theta_binned, np.pi)
@@ -110,6 +119,12 @@ class ImageAnalyzer:
     def compute_alignment_percentage(theta, anisotropy_energy, dominant_angles_deg, tolerance_deg=10):
         """
         Compute percentage of weighted pixels aligned with dominant orientations.
+
+        Parameters:
+        - theta: Orientations field in radians
+        - anisotropy_energy: Computed ansisotropy
+        - dominant_angles_deg: list of Chosen dominant orientations in degrees
+        - tolerance_deg: Grouping Tolerance in degrees
 
         Returns:
         - percentage (0–100)
@@ -140,6 +155,12 @@ class ImageAnalyzer:
     def print_alignment_percentage(percentage, dominant_angles_deg, tolerance_deg=10):
         """
         print alignment percentage.
+
+        Parameters: 
+        - percentage: Computed alignment percentage
+        - dominant_angles_deg: List of  Dominant angles in degrees
+        . tolerance_deg: Grouping Tolerance in degrees
+
         """
         print(
             f"{percentage:.2f}% of orientations align with "
@@ -334,6 +355,9 @@ class ImageAnalyzer:
         Parameters:
         - structure_tensor: matrix containing structure tensors for the image
         - percent: the percentile energy cutoff, for when the anisotropy is included
+
+        Returns:
+        The anisotropy masked with percentile value energy cutoff
         """
 
 
@@ -406,6 +430,13 @@ class ImageAnalyzer:
     def plot_orientation_overlay(image, theta, anisotropy = 1, percentile = 0, opaqueness = 0.55):
         """
         Plot orientation overlay using precomputed anisotropy.
+
+        Parameters:
+        - image: The grayscale image
+        - theta: orientation field in radians
+        - anisotropy: List of anisotropy value for given image, same shape as theta
+        - percentile:  the percentile energy cutoff, for when the anisotropy is computed
+        - opaqueness: Opaqueness of color when plotted
         """
 
         theta_norm = theta / np.pi
@@ -426,9 +457,18 @@ class ImageAnalyzer:
 
 # PLOTTING WEIGHTED HISTOGRAM
     @staticmethod
-    def plot_orientation_histogram(counts, bin_centers, bin_width):
+    def plot_orientation_histogram(counts, bin_centers, bin_width, weighted: bool):
         """
         Plot orientation histogram with HSV colouring.
+
+        Can either be weighted or not.
+
+        Parameters:
+        - counts: counts of each bin from the compute_orientation_histogram 
+        - bin_centers: centers of each bin from the compute_orientation_histogram 
+        - bin_width: width of each bin from the compute_orientation_histogram. can also be chosen arbitrarily 
+        - weigthed: bool. if true displays weighted text. If false display unweighted figure text
+
         """
 
         colours = plt.cm.hsv(bin_centers / np.pi)
@@ -444,8 +484,16 @@ class ImageAnalyzer:
         )
 
         plt.xlabel("Angle")
-        plt.ylabel("Weighted pixel count")
-        plt.title("Histogram of Dominant Orientations")
+
+        if weighted:
+            plt.ylabel("Weighted pixel count")
+            plt.title("Weighted Histogram of Dominant Orientations")
+
+        else:
+            plt.ylabel("Pixel count")
+            plt.title("Histogram of Dominant Orientations")
+
+        
 
         plt.xlim(0, np.pi)
 
@@ -458,12 +506,19 @@ class ImageAnalyzer:
 
 # PLOTTING POLAR HISTOGRAM
     @staticmethod
-    def plot_polar_histogram(counts, bin_centers, bin_width):
+    def plot_polar_histogram(counts, bin_centers, bin_width, weighted: bool):
         """
         Plot polar histogram.
-
+        can be weighted or unweighted.
+        
         The histogram is duplicated over [pi, 2pi] because orientations are axial:
         angles differing by pi represent the same orientation.
+    
+        Parameters:
+        - counts: counts of each bin from the compute_orientation_histogram 
+        - bin_centers: centers of each bin from the compute_orientation_histogram 
+        - bin_width: width of each bin from the compute_orientation_histogram. can also be chosen arbitrarily 
+        - weigthed: bool. if true displays weighted text. If false display unweighted figure text
         """
 
         angles_full = np.concatenate([bin_centers, bin_centers + np.pi])
@@ -486,8 +541,10 @@ class ImageAnalyzer:
         )
 
         ax.set_xticks(np.deg2rad(np.arange(0, 360, 15)))
-
-        plt.title("Weighted Polar Histogram")
+        if weighted:
+            plt.title("Weighted Polar Histogram")   
+        else:
+            plt.title("Polar histogram")
         plt.show()
 
 #PLOTTING BINNED ORIENTATIONS
@@ -509,6 +566,7 @@ class ImageAnalyzer:
         - anisotropy_energy: masked anisotropy weights
         - angles_deg: list of chosen dominant orientations in degrees
         - tolerance_deg: angular tolerance in degrees
+        - opaqueness: Opaqueness of color when plotted
         """
 
         plt.figure(figsize=(8, 8))
