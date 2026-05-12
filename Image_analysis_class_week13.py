@@ -371,6 +371,27 @@ class ImageAnalyzer:
         return anisotropy_masked
     
 
+#COMPUTING UNIT VECTOR OF STRUCTURE TENSOR FOLLOWING ORIENTATION
+    @staticmethod
+    def compute_oriention_unit_vector(structure_tensor):
+        """
+        Computes the orientation vectors for the smallest eigenvalues
+
+        Parameters:
+        - structure_tensor: The matrix of structure tensors for the image
+
+        Returns:
+        x and y components of the unit vectors
+        """
+    
+        evals, evecs = ImageAnalyzer.eigendecomposition(structure_tensor)
+        _, _,v_small, _ = ImageAnalyzer.split_eigenpairs(evals,evecs)
+        theta = ImageAnalyzer.orientation_from_eigenvectors(v_small)
+        vx, vy = ImageAnalyzer.orientation_to_unit_vectors(theta)
+
+        return vx,vy
+
+
 #-------------------
 #PLOTTING FUNCTIONS
 #-------------------
@@ -396,12 +417,7 @@ class ImageAnalyzer:
         - scale: size of vectors. Smaller is bigger
         """
 
-        evals, evecs = ImageAnalyzer.eigendecomposition(structure_tensor)
-        _, _,v_small, _ = ImageAnalyzer.split_eigenpairs(evals,evecs)
-
-        theta = ImageAnalyzer.orientation_from_eigenvectors(v_small)
-
-        vx, vy = ImageAnalyzer.orientation_to_unit_vectors(theta)
+        vx, vy = ImageAnalyzer.compute_oriention_unit_vector(structure_tensor)
 
         Y, X = np.mgrid[0:vx.shape[0], 0:vx.shape[1]]
         step = step
@@ -427,7 +443,7 @@ class ImageAnalyzer:
     
 #PLOT ORIENTATION OVERLAY WITH CHOSEN ENERGY CUTOFF
     @staticmethod
-    def plot_orientation_overlay(image, theta, anisotropy = 1, percentile = 0, opaqueness = 0.55):
+    def plot_orientation_overlay(image, theta, anisotropy = 1, percentile = 0, opaqueness = 0.55, title: str | None = None):
         """
         Plot orientation overlay using precomputed anisotropy.
 
@@ -447,10 +463,15 @@ class ImageAnalyzer:
             theta_norm,
             cmap="hsv",
             alpha= opaqueness * anisotropy,
-            interpolation="nearest"
+            interpolation="nearest",
+            vmin=0,
+            vmax=1
+
         )
-        plt.axis("off")
-        plt.title(f"Top {100 - percentile}% Energy Pixels")
+        if not title:
+            plt.title(f"Top {100 - percentile}% Energy Pixels")
+        else:
+            plt.title(title)
         plt.show()
 
         
@@ -547,38 +568,3 @@ class ImageAnalyzer:
             plt.title("Polar histogram")
         plt.show()
 
-#PLOTTING BINNED ORIENTATIONS
-    @staticmethod
-    def plot_binned_orientations(
-        image,
-        chosen_theta_binned,
-        anisotropy_energy,
-        angles_deg,
-        tolerance_deg=10,
-        opaqueness = 0.55
-    ):
-        """
-        Overlay selected orientations on image.
-
-        Parameters:
-        - image: grayscale image
-        - chosen_theta_binned: output from bin_orientations
-        - anisotropy_energy: masked anisotropy weights
-        - angles_deg: list of chosen dominant orientations in degrees
-        - tolerance_deg: angular tolerance in degrees
-        - opaqueness: Opaqueness of color when plotted
-        """
-
-        plt.figure(figsize=(8, 8))
-        plt.imshow(image, cmap="gray")
-        plt.imshow(
-            chosen_theta_binned,
-            cmap="hsv",
-            vmin=0,
-            vmax=np.pi,
-            alpha= opaqueness * anisotropy_energy,
-            interpolation="nearest"
-        )
-
-        plt.title(f"Binned Orientations with Angles: {angles_deg}° and a Tolerance of ±{tolerance_deg}°")
-        plt.show()
