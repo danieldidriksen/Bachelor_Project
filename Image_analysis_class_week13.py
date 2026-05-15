@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.ndimage as sci 
 
-class ImageAnalyzer:
+class ImageAnalyzer: 
 
 # LOADING GRAYSCALE
     @staticmethod
@@ -10,7 +10,6 @@ class ImageAnalyzer:
         """
         Expected to be used on either Grayscale- or RGB images.
         Load image, optionally crop, and convert to grayscale.
-       
 
         Parameters:
         - path: Relative path to image file
@@ -27,7 +26,6 @@ class ImageAnalyzer:
             img = img.mean(axis=2)
         return img
 
-    
 
 # ORIENTATION HISTOGRAM
     @staticmethod
@@ -73,13 +71,21 @@ class ImageAnalyzer:
         """
         Assign each pixel orientation to nearest dominant orientation (if within tolerance).
 
-        Parameters:
-        - theta: orientation field (radians, [0, pi])
-        - centers: list/array of dominant orientations (degrees)
-        - tolerance_deg: angular tolerance per bin (degrees)
+        Parameters
+        ----------------------
+            theta (np.ndarray):
+                Orientation field in radians with values in the range [0, pi].
+
+            centers (list[float] | np.ndarray):
+                Dominant orientations in degrees.
+
+            tolerance_deg (float, optional):
+                Angular tolerance for assigning orientations to a bin, in degrees.
+                Defaults to 10.
 
         Returns:
-        - chosen_theta_binned (same shape as theta, NaN where no match)
+            chosen_theta_binned (np.ndarray):
+                Same shape as theta, NaN where no match
         """
 
         centers = np.array(np.deg2rad(centers))
@@ -189,7 +195,8 @@ class ImageAnalyzer:
     def structure_tensor(Ix, Iy):
         """
         Compute raw structure tensor components.
-        Returns S11, S12, S22
+        Returns:
+        S11, S12, S22
         """
         S11 = Ix * Ix
         S12 = Ix * Iy
@@ -225,8 +232,9 @@ class ImageAnalyzer:
         """
         Compute eigenvalues and eigenvectors for each pixel tensor.
         Returns:
-        evals: (H, W, 2)
-        evecs: (H, W, 2, 2)
+
+        -evals: (H, W, 2)
+        -evecs: (H, W, 2, 2)
         """
         evals, evecs = np.linalg.eigh(S)
         return evals, evecs
@@ -469,7 +477,7 @@ class ImageAnalyzer:
 
         )
         if not title:
-            plt.title(f"Top {100 - percentile}% Energy Pixels")
+            plt.title(f"Top {100 - percentile}% of Energy Pixels")
         else:
             plt.title(title)
         plt.show()
@@ -567,4 +575,3 @@ class ImageAnalyzer:
         else:
             plt.title("Polar histogram")
         plt.show()
-
