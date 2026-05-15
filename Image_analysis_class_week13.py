@@ -356,13 +356,13 @@ class ImageAnalyzer:
     
 #COMPUTING ANISOTROPY MASKED:
     @staticmethod
-    def compute_anisotropy_masked(structure_tensor, percent = 45):
+    def compute_anisotropy_masked(structure_tensor, percentile = 45):
         """
         Computing the anisotropy masked for an image using the structure tensors
 
         Parameters:
         - structure_tensor: matrix containing structure tensors for the image
-        - percent: the percentile energy cutoff, for when the anisotropy is included
+        - percentile: the percentile energy cutoff, for when the anisotropy is included
 
         Returns:
         The anisotropy masked with percentile value energy cutoff
@@ -373,7 +373,7 @@ class ImageAnalyzer:
         lam_s, lam_l, v_s, v_l = ImageAnalyzer.split_eigenpairs(evals, evecs)
         aniso = ImageAnalyzer.compute_anisotropy(lam_s, lam_l)
         energy = ImageAnalyzer.compute_energy(lam_s, lam_l)
-        mask = ImageAnalyzer.energy_mask(energy, percent)
+        mask = ImageAnalyzer.energy_mask(energy, percentile)
         anisotropy_masked = ImageAnalyzer.mask_anisotropy(aniso, mask)
 
         return anisotropy_masked
