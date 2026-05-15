@@ -381,7 +381,7 @@ class ImageAnalyzer:
 
 #COMPUTING UNIT VECTOR OF STRUCTURE TENSOR FOLLOWING ORIENTATION
     @staticmethod
-    def compute_oriention_unit_vector(structure_tensor):
+    def compute_orientation_unit_vector(structure_tensor):
         """
         Computes the orientation vectors for the smallest eigenvalues
 
