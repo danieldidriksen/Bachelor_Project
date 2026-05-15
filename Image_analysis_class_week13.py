@@ -371,8 +371,8 @@ class ImageAnalyzer:
 
         evals, evecs = ImageAnalyzer.eigendecomposition(structure_tensor)
         lam_s, lam_l, v_s, v_l = ImageAnalyzer.split_eigenpairs(evals, evecs)
-        energy = ImageAnalyzer.compute_energy(lam_s, lam_l)
         aniso = ImageAnalyzer.compute_anisotropy(lam_s, lam_l)
+        energy = ImageAnalyzer.compute_energy(lam_s, lam_l)
         mask = ImageAnalyzer.energy_mask(energy, percent)
         anisotropy_masked = ImageAnalyzer.mask_anisotropy(aniso, mask)
 
