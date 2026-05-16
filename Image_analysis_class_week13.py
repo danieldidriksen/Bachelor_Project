@@ -11,12 +11,16 @@ class ImageAnalyzer:
         Expected to be used on either Grayscale- or RGB images.
         Load image, optionally crop, and convert to grayscale.
 
-        Parameters:
-        - path: Relative path to image file
-        - crop: (row_start, row_end, col_start, col_end)
+        Parameters
+        ----------------------
+            path:
+                Relative path to image file
+
+            crop:
+                (row_start, row_end, col_start, col_end)
 
         Returns:
-        - grayscale image
+            grayscale image:
         """
         img = plt.imread(path)
         if crop is not None:
@@ -34,15 +38,19 @@ class ImageAnalyzer:
         Compute histogram of orientations.
         Can be unweighted or weighted
 
-        Parameters:
-        - theta: orientation field (radians, [0, pi])
-        - anisotropy_energy: weights (same shape as theta)
-        - bins: number of histogram bins
+        Parameters
+        ----------------------
+            theta:
+                Orientation field (radians, [0, pi])
+
+            anisotropy_energy:
+                Weights (same shape as theta)
+
+            bins:
+                Number of histogram bins (defaults to 180)
 
         Returns:
-        - counts
-        - bin_centers
-        - bin_width
+            counts, bin_centers, bin_width:
         """
 
         theta_flat = theta.ravel()
@@ -105,12 +113,16 @@ class ImageAnalyzer:
         """
         Quantize orientations into fixed angular bins.
 
-        Parameters:
-        - theta: orientation field in radians
-        - bin_size: bin spacing in degrees
+        Parameters
+        ----------------------
+            theta:
+                Orientation field in radians
+
+            bin_size:
+                Bin spacing in degrees
 
         Returns:
-        - theta_binned in radians
+            theta_binned: in radians
         """
 
         bin_size = np.deg2rad(bin_size)
@@ -126,14 +138,22 @@ class ImageAnalyzer:
         """
         Compute percentage of weighted pixels aligned with dominant orientations.
 
-        Parameters:
-        - theta: Orientations field in radians
-        - anisotropy_energy: Computed ansisotropy
-        - dominant_angles_deg: list of Chosen dominant orientations in degrees
-        - tolerance_deg: Grouping Tolerance in degrees
+        Parameters
+        ----------------------
+            theta:
+                Orientations field in radians
+
+            anisotropy_energy:
+                Computed ansisotropy
+
+            dominant_angles_deg:
+                List of chosen dominant orientations in degrees
+
+            tolerance_deg:
+                Grouping tolerance in degrees (defaults to 10)
 
         Returns:
-        - percentage (0–100)
+            percentage: (0–100)
         """
 
         # Convert inputs
@@ -162,11 +182,16 @@ class ImageAnalyzer:
         """
         print alignment percentage.
 
-        Parameters: 
-        - percentage: Computed alignment percentage
-        - dominant_angles_deg: List of  Dominant angles in degrees
-        . tolerance_deg: Grouping Tolerance in degrees
+        Parameters
+        ----------------------
+            percentage:
+                Computed alignment percentage
 
+            dominant_angles_deg:
+                List of dominant angles in degrees
+
+            tolerance_deg:
+                Grouping tolerance in degrees
         """
         print(
             f"{percentage:.2f}% of orientations align with "
@@ -184,7 +209,9 @@ class ImageAnalyzer:
     def compute_gradients(img, sigma_deriv=1):
         """
         Compute image gradients using Gaussian derivatives.
-        Returns Ix, Iy
+
+        Returns:
+            Ix, Iy:
         """
         Ix = sci.gaussian_filter(img, sigma=sigma_deriv, order=[0, 1])
         Iy = sci.gaussian_filter(img, sigma=sigma_deriv, order=[1, 0])
@@ -196,7 +223,7 @@ class ImageAnalyzer:
         """
         Compute raw structure tensor components.
         Returns:
-        S11, S12, S22
+            S11, S12, S22:
         """
         S11 = Ix * Ix
         S12 = Ix * Iy
@@ -208,6 +235,9 @@ class ImageAnalyzer:
     def smooth_tensor(S11, S12, S22, sigma_tensor=2):
         """
         Apply Gaussian smoothing to tensor components.
+
+        Returns:
+            S11, S12, S22:
         """
         S11 = sci.gaussian_filter(S11, sigma=sigma_tensor)
         S12 = sci.gaussian_filter(S12, sigma=sigma_tensor)
@@ -219,6 +249,9 @@ class ImageAnalyzer:
     def tensor_to_matrix(S11, S12, S22):
         """
         Stack structure tensor components into (H, W, 2, 2) matrix field.
+
+        Returns:
+            S:
         """
         S = np.stack([
             np.stack([S11, S12], axis=-1),
@@ -231,10 +264,15 @@ class ImageAnalyzer:
     def eigendecomposition(S):
         """
         Compute eigenvalues and eigenvectors for each pixel tensor.
-        Returns:
 
-        -evals: (H, W, 2)
-        -evecs: (H, W, 2, 2)
+        Returns
+        ----------------------------
+            eigen values: 
+                (H, W, 2)
+
+            eigen vectors: 
+                (H, W, 2, 2)
+
         """
         evals, evecs = np.linalg.eigh(S)
         return evals, evecs
@@ -244,6 +282,10 @@ class ImageAnalyzer:
     def split_eigenpairs(evals, evecs):
         """
         Split eigenvalues and eigenvectors into small and large components.
+
+        Returns:
+            lam_small, lam_large, v_small, v_large:
+
         """
         lam_small = evals[:, :, 0]
         lam_large = evals[:, :, 1]
@@ -258,6 +300,10 @@ class ImageAnalyzer:
     def orientation_from_eigenvectors(v_small):
         """
         Compute orientation angle from smallest eigenvector.
+
+        Returns:
+            Theta:
+
         """
         theta = np.arctan2(-v_small[:, :, 1], v_small[:, :, 0])
         theta = np.mod(theta, np.pi)
@@ -268,6 +314,11 @@ class ImageAnalyzer:
     def orientation_to_unit_vectors(theta):
         """
         Convert orientation angle to unit direction vectors.
+
+        Returns:
+            vx, vy:
+                x and y components of the unit vectors
+
         """
         vx = np.cos(theta)
         vy = np.sin(theta)
@@ -278,6 +329,10 @@ class ImageAnalyzer:
     def compute_energy(lam_small, lam_large):
         """
         Compute structure tensor energy.
+
+        Returns:
+            energy:
+
         """
         return lam_small + lam_large
 
@@ -286,6 +341,10 @@ class ImageAnalyzer:
     def compute_anisotropy(lam_small, lam_large):
         """
         Compute isotropy and anisotropy measures.
+
+        Returns:
+            anisotropy:
+
         """
         isotropy = lam_small / (lam_large + 1e-10)
         anisotropy = 1 - isotropy
@@ -296,6 +355,10 @@ class ImageAnalyzer:
     def energy_mask(energy, percentile=45):
         """
         Create mask for high-energy pixels.
+
+        Returns:
+            mask:
+
         """
         threshold = np.percentile(energy, percentile)
         return energy >= threshold
@@ -305,6 +368,10 @@ class ImageAnalyzer:
     def mask_anisotropy(anisotropy, mask):
         """
         Zero out anisotropy where energy is low.
+
+        Returns:
+            masked results:
+
         """
         result = anisotropy.copy()
         result[~mask] = 0
@@ -317,12 +384,16 @@ class ImageAnalyzer:
             Axial distance (orientation invariant: π-periodic)
             In radians.
 
-            Parameters:
-            - a: angle1
-            - b: angle2
+            Parameters
+            ----------------------
+                a:
+                    Angle1
+
+                b:
+                    Angle2
 
             Returns:
-            Axial distance between a and b.
+                Axial distance between a and b:
             """
             d = np.abs(a - b) % np.pi
             return np.minimum(d, np.pi - d)
@@ -338,14 +409,19 @@ class ImageAnalyzer:
         """
         Computing the structure tensor for a given image
 
-        Parameters:
-        - img: grayscale image
-        - sigma_derivative: sigma for first gaussian smoothing when finding gradients
-        - sigma_tensor: sigma for second gaussan when smoothing the tensor over local neighbourhood pixels
+        Parameters
+        ----------------------
+            img:
+                Grayscale image
 
+            sigma_derivative:
+                Sigma for first gaussian smoothing when finding gradients
+
+            sigma_tensor:
+                Sigma for second gaussian smoothing when smoothing the tensor over local neighbourhood pixels
 
         Returns:
-        Structure tensor for given image
+            Smoothed Structure tensor for given image:
         """
         Ix, Iy = ImageAnalyzer.compute_gradients(img, sigma_deriv=sigma_derivative)
         S11, S12, S22 = ImageAnalyzer.structure_tensor(Ix, Iy)
@@ -360,12 +436,16 @@ class ImageAnalyzer:
         """
         Computing the anisotropy masked for an image using the structure tensors
 
-        Parameters:
-        - structure_tensor: matrix containing structure tensors for the image
-        - percentile: the percentile energy cutoff, for when the anisotropy is included
+        Parameters
+        ----------------------
+            structure_tensor:
+                Matrix containing structure tensors for the image
+
+            percentile:
+                The percentile energy cutoff, for when the anisotropy is included
 
         Returns:
-        The anisotropy masked with percentile value energy cutoff
+            The anisotropy masked with percentile value energy cutoff:
         """
 
 
@@ -385,11 +465,14 @@ class ImageAnalyzer:
         """
         Computes the orientation vectors for the smallest eigenvalues
 
-        Parameters:
-        - structure_tensor: The matrix of structure tensors for the image
+        Parameters
+        ----------------------
+            structure_tensor:
+                The matrix of structure tensors for the image
 
         Returns:
-        x and y components of the unit vectors
+            vx, vy:
+                x and y components of the unit vectors
         """
     
         evals, evecs = ImageAnalyzer.eigendecomposition(structure_tensor)
@@ -418,11 +501,19 @@ class ImageAnalyzer:
         """
         Plotting dominant orientation vectors
 
-        Parameters:
-        - img: grayscale image
-        - structure_tenstor: matrix containing structure tensors for the image
-        - step: How often vectors are displayed (pixel-wise)
-        - scale: size of vectors. Smaller is bigger
+        Parameters
+        ----------------------
+            img:
+                Grayscale image
+
+            structure_tenstor:
+                Matrix containing structure tensors for the image
+
+            step:
+                How often vectors are displayed pixel-wise (defaults to 40)
+
+            scale:
+                Size of vectors. Smaller is bigger (defaults to 50)
         """
 
         vx, vy = ImageAnalyzer.compute_oriention_unit_vector(structure_tensor)
@@ -455,12 +546,22 @@ class ImageAnalyzer:
         """
         Plot orientation overlay using precomputed anisotropy.
 
-        Parameters:
-        - image: The grayscale image
-        - theta: orientation field in radians
-        - anisotropy: List of anisotropy value for given image, same shape as theta
-        - percentile:  the percentile energy cutoff, for when the anisotropy is computed
-        - opaqueness: Opaqueness of color when plotted
+        Parameters
+        ----------------------
+            image:
+                The grayscale image
+
+            theta:
+                Orientation field in radians
+
+            anisotropy:
+                List of anisotropy value for given image, same shape as theta
+
+            percentile:
+                The percentile energy cutoff, for when the anisotropy is computed
+
+            opaqueness:
+                Opaqueness of color when plotted
         """
 
         theta_norm = theta / np.pi
@@ -492,12 +593,19 @@ class ImageAnalyzer:
 
         Can either be weighted or not.
 
-        Parameters:
-        - counts: counts of each bin from the compute_orientation_histogram 
-        - bin_centers: centers of each bin from the compute_orientation_histogram 
-        - bin_width: width of each bin from the compute_orientation_histogram. can also be chosen arbitrarily 
-        - weigthed: bool. if true displays weighted text. If false display unweighted figure text
+        Parameters
+        ----------------------
+            counts:
+                Counts of each bin from the compute_orientation_histogram
 
+            bin_centers:
+                Centers of each bin from the compute_orientation_histogram
+
+            bin_width:
+                Width of each bin from the compute_orientation_histogram. Can also be chosen arbitrarily
+
+            weigthed:
+                Bool. If true displays weighted text. If false display unweighted figure text
         """
 
         colours = plt.cm.hsv(bin_centers / np.pi)
@@ -539,15 +647,23 @@ class ImageAnalyzer:
         """
         Plot polar histogram.
         can be weighted or unweighted.
-        
+
         The histogram is duplicated over [pi, 2pi] because orientations are axial:
         angles differing by pi represent the same orientation.
-    
-        Parameters:
-        - counts: counts of each bin from the compute_orientation_histogram 
-        - bin_centers: centers of each bin from the compute_orientation_histogram 
-        - bin_width: width of each bin from the compute_orientation_histogram. can also be chosen arbitrarily 
-        - weigthed: bool. if true displays weighted text. If false display unweighted figure text
+
+        Parameters
+        ----------------------
+            counts:
+                Counts of each bin from the compute_orientation_histogram
+
+            bin_centers:
+                Centers of each bin from the compute_orientation_histogram
+
+            bin_width:
+                Width of each bin from the compute_orientation_histogram. Can also be chosen arbitrarily
+
+            weigthed:
+                Bool. If true displays weighted text. If false display unweighted figure text
         """
 
         angles_full = np.concatenate([bin_centers, bin_centers + np.pi])
