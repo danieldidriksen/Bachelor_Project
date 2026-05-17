@@ -516,7 +516,7 @@ class ImageAnalyzer:
                 Size of vectors. Smaller is bigger (defaults to 50)
         """
 
-        vx, vy = ImageAnalyzer.compute_oriention_unit_vector(structure_tensor)
+        vx, vy = ImageAnalyzer.compute_orientation_unit_vector(structure_tensor)
 
         Y, X = np.mgrid[0:vx.shape[0], 0:vx.shape[1]]
         step = step
@@ -587,7 +587,7 @@ class ImageAnalyzer:
 
 # PLOTTING WEIGHTED HISTOGRAM
     @staticmethod
-    def plot_orientation_histogram(counts, bin_centers, bin_width, weighted: bool):
+    def plot_orientation_histogram(counts, bin_centers, bin_width, weighted: bool = False):
         """
         Plot orientation histogram with HSV colouring.
 
