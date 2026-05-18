@@ -23,13 +23,16 @@ class ImageAnalyzer:
             grayscale image:
         """
         img = plt.imread(path)
+        img = img.astype(np.float64)
         if crop is not None:
             r1, r2, c1, c2 = crop
             img = img[r1:r2, c1:c2]
         if img.ndim == 3: 
             img = img.mean(axis=2)
-        return img
-
+        if img.max() <=1:
+            return img
+        if 1 < img.max() <= 255:
+            return img/255
 
 # ORIENTATION HISTOGRAM
     @staticmethod
