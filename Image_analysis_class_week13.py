@@ -305,7 +305,10 @@ class ImageAnalyzer:
             Theta:
 
         """
-        theta = np.arctan2(-v_small[:, :, 1], v_small[:, :, 0])
+
+        vy, vx = v_small[:, :, 1], v_small[:, :, 0]
+
+        theta = np.arctan2(-vy, vx)
         theta = np.mod(theta, np.pi)
         return theta
 
