@@ -6,33 +6,30 @@ class ImageAnalyzer:
 
 # LOADING GRAYSCALE
     @staticmethod
-    def load_crop_grayscale(path, crop=None):
+    def load_grayscale(path):
         """
         Expected to be used on either Grayscale- or RGB images.
         Load image, optionally crop, and convert to grayscale.
+
+        Note
+        ----------------------
+        Remember to crop image, to desired size.
 
         Parameters
         ----------------------
             path:
                 Relative path to image file
 
-            crop:
-                (row_start, row_end, col_start, col_end)
-
         Returns:
             grayscale image:
         """
         img = plt.imread(path)
         img = img.astype(np.float64)
-        if crop is not None:
-            r1, r2, c1, c2 = crop
-            img = img[r1:r2, c1:c2]
+
         if img.ndim == 3: 
             img = img.mean(axis=2)
-        if img.max() <=1:
-            return img
-        if 1 < img.max() <= 255:
-            return img/255
+
+        return img
 
 # ORIENTATION HISTOGRAM
     @staticmethod
