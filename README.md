@@ -183,24 +183,6 @@ Displays orientation distributions in circular form while respecting axial symme
 
 ---
 
-# Orientation Binning
-
-The toolkit also supports grouping orientations into angular bins.
-
-This can be used for:
-- Image segmentation
-- Dominant direction analysis
-- Alignment estimation
-- Quantifying directional structures
-
-Both:
-- Manual dominant orientation selection
-- Uniform angular binning
-
-are supported.
-
----
-
 # Educational Purpose
 
 This repository was created with a strong focus on readability and learning.
