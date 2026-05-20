@@ -9,9 +9,9 @@ class ImageAnalyzer:
     def load_grayscale(path):
         """
         Expected to be used on either Grayscale- or RGB images.
-        Load image, optionally crop, and convert to grayscale.
+        Load image and convert to grayscale.
 
-        Note
+        Noteare to
         ----------------------
         Remember to crop image, to desired size.
 
