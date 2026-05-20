@@ -11,7 +11,7 @@ class ImageAnalyzer:
         Expected to be used on either Grayscale- or RGB images.
         Load image and convert to grayscale.
 
-        Noteare to
+        Note
         ----------------------
         Remember to crop image, to desired size.
 
