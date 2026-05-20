@@ -9,7 +9,7 @@ class ImageAnalyzer:
     def load_grayscale(path):
         """
         Expected to be used on either Grayscale- or RGB images.
-        Load image, optionally crop, and convert to grayscale.
+        Load image and convert to grayscale.
 
         Note
         ----------------------
@@ -101,9 +101,8 @@ class ImageAnalyzer:
         chosen_theta_binned = np.full_like(theta, np.nan)
 
         for center in centers:
-            # Circular distance (important!)
             diff = ImageAnalyzer.axial_distance(theta, center)
-            mask = diff < tolerance
+            mask = diff <= tolerance
             chosen_theta_binned[mask] = center
         return chosen_theta_binned
     
@@ -326,7 +325,7 @@ class ImageAnalyzer:
         vx = np.cos(theta)
         vy = np.sin(theta)
         return vx, vy
-    
+
 #COMPUTE TOTAL ENERGY PER PIXEL 
     @staticmethod
     def compute_energy(lam_small, lam_large):
