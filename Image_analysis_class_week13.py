@@ -666,7 +666,7 @@ class ImageAnalyzer:
                 Width of each bin from the compute_orientation_histogram. Can also be chosen arbitrarily
 
             weigthed:
-                Bool. If true displays weighted text. If false display unweighted figure text
+                Bool. If true displays weighted title. If false displays unweighted title.
         """
 
         angles_full = np.concatenate([bin_centers, bin_centers + np.pi])
