@@ -116,10 +116,20 @@ To ensure that the notebooks run correctly in Google Colab, it is important to u
 - `matplotlib==3.10.9`
 - `matplotlib-inline==0.2.2`
 
-These can be installed directly in a Colab notebook using:
+The currently installed versions can be checked using:
 
 ```python
-!pip install --upgrade --force-reinstall matplotlib matplotlib-inline
+import matplotlib
+import matplotlib_inline
+
+print(matplotlib.__version__)
+print(matplotlib_inline.__version__)
+```
+
+The required versions can be installed directly in a Colab notebook using:
+
+```python
+!pip install --force-reinstall matplotlib==3.10.9 matplotlib-inline==0.2.2
 ```
 
 If plotting issues occur, restarting the Colab runtime after installation is recommended.
