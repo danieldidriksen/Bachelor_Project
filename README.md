@@ -108,7 +108,21 @@ To use the notebooks in Colab:
 2. Upload the `Image_analysis_class_week13.py` file
 3. Upload any required example images
 4. Run the notebook cells normally
----
+
+## Google Colab Requirements
+
+To ensure that the notebooks run correctly in Google Colab, it is important to use the following package versions:
+
+- `matplotlib==3.10.9`
+- `matplotlib-inline==0.2.2`
+
+These can be installed directly in a Colab notebook using:
+
+```python
+!pip install --upgrade --force-reinstall matplotlib matplotlib-inline
+```
+
+If plotting issues occur, restarting the Colab runtime after installation is recommended.
 
 # Example Workflow
 
