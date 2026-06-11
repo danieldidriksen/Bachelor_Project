@@ -536,8 +536,8 @@ class ImageAnalyzer:
         plt.imshow(img, cmap="gray")
 
         # plotting the dominant direction eigenvectors.
-        plt.quiver(Xs, Ys, vxs, vys, color="yellow",scale = scale)
-        plt.quiver(Xs, Ys, -vxs, -vys, color="yellow")
+        plt.quiver(Xs, Ys, vxs, vys, color="yellow", scale = scale)
+        plt.quiver(Xs, Ys, -vxs, -vys, color="yellow", scale = scale)
 
         plt.title("Dominant Orientation Vector Field")
         plt.show()
